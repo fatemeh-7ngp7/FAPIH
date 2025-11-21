@@ -1,4 +1,5 @@
 from fastapi import FastAPI, HTTPException, Depends
+from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from typing import List, Optional, ClassVar
 from uuid import uuid4
@@ -34,6 +35,15 @@ class TodoItem(BaseModel):
     description: Optional[str] = None
     priority: str
     allowed_priorities: ClassVar[List[str]] = ["Low", "Medium", "High"]
+
+# Add CORS middleware
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # Allow all origins. For production, specify exact origins: ["http://localhost:8080", "http://localhost:3000"]
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 Base.metadata.create_all(bind=engine)
 
@@ -73,9 +83,9 @@ def update_todo_item(item_id: str, updated_item: TodoItem, db: Session = Depends
         raise HTTPException(status_code=404, detail="Item not found")
     if updated_item.priority not in TodoItem.allowed_priorities:
         raise HTTPException(status_code=400, detail="Invalid priority level")
-    db_item.title = updated_item.title
-    db_item.description = updated_item.description
-    db_item.priority = updated_item.priority
+    db_item.title = updated_item.title                       # type: ignore
+    db_item.description = updated_item.description              # type: ignore
+    db_item.priority = updated_item.priority                  # type: ignore
     db.commit()
     db.refresh(db_item)
     return db_item
